@@ -18,7 +18,8 @@ public:
     ReceiveAndDraw()
     {
         ros::NodeHandle private_nh;
-        pub = private_nh.advertise<visualization_msgs::Marker>("BezierCurve", 100);
+        pubLine = private_nh.advertise<visualization_msgs::Marker>("ResultLine", 100);
+        pubCurve = private_nh.advertise<visualization_msgs::Marker>("BezierCurve", 100);  
         sub = private_nh.subscribe<visualization_msgs::Marker>("SolutionPoints" ,100, &ReceiveAndDraw::DrawCallback, this);
 
     }
@@ -78,7 +79,8 @@ public:
     }
 
 private:
-    ros::Publisher pub;
+    ros::Publisher pubLine;
+    ros::Publisher pubCurve;
     ros::Subscriber sub;
     vector<Vector3f> beziercurve;
     visualization_msgs::Marker LinesToDraw;
@@ -96,7 +98,8 @@ private:
         CurveToDraw.type = LinesToDraw.type = visualization_msgs::Marker::LINE_STRIP;
         CurveToDraw.scale.x = LinesToDraw.scale.x = 0.1;
 
-        LinesToDraw.color.b = 1.0;
+        LinesToDraw.color.r = 1.0;
+        LinesToDraw.color.g = 1.0;
         LinesToDraw.color.a = 1.0;
 
         CurveToDraw.color.r = 1.0;
@@ -114,7 +117,7 @@ private:
 
         beziercurve.push_back(_previousSolution[0]);
 
-        const float VelocityDrawingMultiplier = 0.5;
+        const float VelocityDrawingMultiplier = 0.1;
         Vector3f _startVel = Vector3f(1, 0, 0);
         Vector3f _goalVel = Vector3f(0, -1, 0);
         Vector3f prevControlDiff = -_startVel*VelocityDrawingMultiplier;
@@ -164,8 +167,8 @@ private:
             p.z = i->z();
             CurveToDraw.points.push_back(p);
         }
-    	pub.publish(LinesToDraw);
-        pub.publish(CurveToDraw);
+    	pubLine.publish(LinesToDraw);
+        pubCurve.publish(CurveToDraw);
     }
 
 };
@@ -178,5 +181,3 @@ int main(int argc, char** argv)
     ros::spin ();
     return 0;
 }
-
-
