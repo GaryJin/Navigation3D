@@ -41,10 +41,30 @@ Vector3f GridStateSpace3d::intermediateState(const Vector3f &source, const Vecto
     return val;
 }
 
+
+Vector3f GridStateSpace3d::ConnectmediaState(const Vector3f &source, const Vector3f &target, float StepSize) const {
+    bool debug;
+
+    if(this->distance (source,target) < StepSize)
+    {
+        return target;
+    }
+
+    Vector3f delta = target - source;
+
+    delta = delta / delta.norm();   //  unit vector
+    
+    Vector3f val = source + delta * StepSize;
+    return val;
+}
+
+
 bool GridStateSpace3d::transitionValid(const Vector3f &from, const Vector3f &to) const {
     //  make sure we're within bounds
     if (!stateValid(to)) return false;
 
+    if(from == to)
+        return true;
     Vector3f delta = to - from;
 
     //  get the corners of this segment in integer coordinates.  This limits our intersection test to only the boxes in that square
@@ -106,6 +126,8 @@ bool GridStateSpace3d::transitionValid(const Vector3f &from, const Vector3f &to)
 
 bool GridStateSpace3d::transitionValid2d(const Vector2f &from, const Vector2f &to, int x, int y, float gridSqWidth, float gridSqHeight) const {
 
+    if(from == to)
+        return false;
     Vector2f delta = to - from;
 
     //  there's an obstacle here, so check for intersection

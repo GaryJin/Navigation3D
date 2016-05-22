@@ -96,7 +96,7 @@ private:
         CurveToDraw.id = 2;
         LinesToDraw.id = 1;
         CurveToDraw.type = LinesToDraw.type = visualization_msgs::Marker::LINE_STRIP;
-        CurveToDraw.scale.x = LinesToDraw.scale.x = 0.1;
+        CurveToDraw.scale.x = LinesToDraw.scale.x = 100;
 
         LinesToDraw.color.r = 1.0;
         LinesToDraw.color.g = 1.0;

@@ -13,7 +13,8 @@ using namespace Eigen;
 using namespace std;
 
 Vector3f Bias(-0.43, 6.13, 0.15);
-
+//Vector3f Bias(30000, 26000, 2310);
+//Vector3f Bias(4850, 6550, 0);
 
 vector<Vector3f> ObstacleCloud;
 
@@ -24,8 +25,8 @@ void outputCallback(const sensor_msgs::PointCloud2 &mapmsg)
     sensor_msgs::PointCloud2ConstIterator<float> y_in(mapmsg, "y");
     sensor_msgs::PointCloud2ConstIterator<float> z_in(mapmsg, "z");
     Vector3f point;
-    float x_inmax=FLT_MIN,x_inmin=FLT_MAX,y_inmax=FLT_MIN,
-            y_inmin=FLT_MAX,z_inmax=FLT_MIN,z_inmin=FLT_MAX;
+    float x_inmax=-FLT_MAX,x_inmin=FLT_MAX,y_inmax=-FLT_MAX,
+            y_inmin=FLT_MAX,z_inmax=-FLT_MAX,z_inmin=FLT_MAX;
     for(; x_in != x_in.end(); ++x_in, ++y_in, ++z_in) {
       point = Eigen::Vector3f((*x_in), (*y_in), (*z_in));
       point = point+Bias;

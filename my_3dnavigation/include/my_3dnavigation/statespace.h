@@ -40,6 +40,8 @@ public:
      */
     virtual T intermediateState(const T &source, const T &target, float minStepSize, float maxStepSize) const = 0;
 
+    virtual T ConnectmediaState(const T &source, const T &target, float StepSize) const = 0;
+
     /**
      * @brief Calculate the distance between two states
      *

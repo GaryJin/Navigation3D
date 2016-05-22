@@ -3,7 +3,6 @@
 
 #include <rrtstartree.h>
 
-
 namespace RRTStar
 {
     /**
@@ -210,6 +209,8 @@ namespace RRTStar
 
 
     protected:
+        //normal connect funtion
+        
         Node<T> *_findBestPath(const T &targetState, rrtStarTree<T> &treeToSearch, double *depthOut) {
             Node<T> *bestNode = nullptr;
             double depth = DBL_MAX;
@@ -230,7 +231,37 @@ namespace RRTStar
 
             return bestNode;
         }
+        /*
+        //advanced connect function
+        Node<T> *_findBestPath(const T &targetState, rrtStarTree<T> &treeToSearch, double *depthOut) {
+            Node<T> *bestNode = nullptr;
+            double depth = DBL_MAX;
+            bestNode = treeToSearch.nearest(targetState);
+            if(!bestNode)
+                return nullptr;
+            T intermediateState;
+            intermediateState = _startTree.stateSpace().ConnectmediaState(
+                    bestNode->state(),
+                    targetState,
+                    _startTree.stepSize()
+                );
+            treeToSearch.nearnodes(intermediateState);
+            std::list<Nodes_Dis<T>> sortednode;
+            treeToSearch.SortNodesBydis (targetState, treeToSearch.nearNodes (), sortednode);
+            for(Nodes_Dis<T> sorted : sortednode)
+            {
+                if(_startTree.stateSpace ().transitionValid (sorted.node->state (), targetState))
+                {
+                    depth = sorted.distance;
+                    bestNode = sorted.node;
+                }
+            }
 
+            if (depthOut) *depthOut = depth;
+
+            return bestNode;
+        }
+        */
 
     private:
         rrtStarTree<T> _startTree;

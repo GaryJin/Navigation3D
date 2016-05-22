@@ -20,6 +20,7 @@ public:
     bool transitionValid(const Eigen::Vector3f &from, const Eigen::Vector3f &to) const;
 
     Eigen::Vector3f intermediateState(const Eigen::Vector3f &source, const Eigen::Vector3f &target, float minStepSize, float maxStepSize) const;
+    Eigen::Vector3f ConnectmediaState(const Eigen::Vector3f &source, const Eigen::Vector3f &target, float StepSize) const;
 
     const ObstacleGrid3d &obstacleGrid() const;
     ObstacleGrid3d &obstacleGrid();

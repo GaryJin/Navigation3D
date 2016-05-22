@@ -13,10 +13,10 @@
 template<typename T>
 class Node {
 public:
-    Node(const T &state, Node<T> *parent = nullptr) {
+    Node(const T &state, Node<T> *parent = nullptr, double Distance = 0) {
         _parent = parent;
         _state = state;
-        distance = 0;
+        distance = Distance;
         if (_parent) {
             _parent->_children.push_back(this);
         }
@@ -25,6 +25,7 @@ public:
     const Node<T> *parent() const{
         return _parent;
     }
+
 
     void addchildren(Node<T> *newchildren)
     {
@@ -36,6 +37,7 @@ public:
         _children.remove(children);
     }
 
+    //change the parent of the node
     void changeparent(Node<T> *newparent)
     {
         _parent->removechildren(this);
@@ -60,9 +62,15 @@ public:
      */
     void setDistance(double dist)
     {
-        distance = dist;
+        if(dist >= 0)
+            distance = dist;        
     }
 
+    /*
+     *  Change the distance of the node along with the children nodes
+     *  Using the recursion to achieve the function
+     *
+     */
     void resetDistance(double dist)
     {
         if(!_children.empty ())
@@ -72,7 +80,10 @@ public:
 
     }
 
-    double getDistance()
+    /*
+     *  return the distance value
+     */
+    const double getDistance() const
     {
         return distance;
     }

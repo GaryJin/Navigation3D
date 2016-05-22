@@ -13,12 +13,26 @@
 #include <iostream>
 #include <limits.h>
 #include <float.h>
+#include <cctype>
 
 //the Coefficient of the rande
 const double CoefficientATrange=5.4;
 
 namespace RRTStar
 {
+
+    template<typename T>
+    struct Nodes_Dis
+    {
+        Node<T> * node;
+        double distance;
+    };
+    
+    template<typename T>
+    bool compare_nocase (const Nodes_Dis<T>& first, const Nodes_Dis<T>& second)
+    {
+        return ( first.distance < second.distance );
+    }
 
     template<typename T>
     class rrtStarTree
@@ -31,7 +45,7 @@ namespace RRTStar
             //  default values
             setStepSize(0.1);
             setMaxStepSize(5);
-            setMaxIterations(1000);
+            setMaxIterations(10000);
             setASCEnabled(false);
             setGoalBias(0);
             setWaypointBias(0);
@@ -47,6 +61,7 @@ namespace RRTStar
         StateSpace<T> &stateSpace() {
             return *_stateSpace;
         }
+
         const StateSpace<T> &stateSpace() const {
             return *_stateSpace;
         }
@@ -168,7 +183,7 @@ namespace RRTStar
 
 
         /**
-         * Find the node int the tree closest to @state.  Pass in a float pointer
+         * Find the node in the tree closest to @state.  Pass in a float pointer
          * as the second argument to get the distance that the node is away from
          * @state.
          */
@@ -179,7 +194,7 @@ namespace RRTStar
             for (Node<T> *other : _nodes) {
                 float dist = _stateSpace->distance(other->state(), state);
                 if (bestDistance < 0 || dist < bestDistance) {
-                    bestDistance = dist;
+                    bestDistance    = dist;
                     best = other;
                 }
             }
@@ -229,24 +244,43 @@ namespace RRTStar
          * node.
          * @param aim node
          */
-        void nearnodes(const T &newnode)
+        int nearnodes(const T &newnode)
         {
             //claer the old _nearnodes
             if(!_nearnodes.empty())
                 _nearnodes.clear();
             //count the range
-            double range=stepSize()*CoefficientATrange*pow(log(_nodes.size())/_nodes.size(),1/3.0);
- //           qDebug()<<"range="<<range;
+            double range=0.5*(maxStepSize()+stepSize())*CoefficientATrange*pow(log(_nodes.size())/_nodes.size(),1/3.0);
             //find out the near nodes
             for(Node<T> *other : _nodes)
             {
                 if((_stateSpace->distance(other->state(),newnode))<range)
                 {
-                    if(_stateSpace->transitionValid (other->state (),newnode))
-                        _nearnodes.push_back(other);
+//                    if(_stateSpace->transitionValid (other->state (),newnode))
+                    _nearnodes.push_back(other);
                 }
             }
+            return _nearnodes.size();
         }
+
+        /**
+         * @brief Sort the Nodes by the distance 
+         * 
+         * @param node , sortnode
+         */
+        void SortNodesBydis(const T &newnode, std::vector<Node<T> *> NodesToSort, std::list<Nodes_Dis<T>> &SortedList)
+        {
+            for(Node<T> *other : NodesToSort)
+            {
+                Nodes_Dis<T> insert;
+                insert.node = other;
+                insert.distance = _stateSpace->distance(newnode, other->state()) + other->getDistance();
+                SortedList.push_back(insert);
+            }
+            SortedList.sort (compare_nocase<T>);
+        } 
+
+
 
         /**
          * Optimize the nodes that near the aim node by changing their parent to the aim node
@@ -263,11 +297,13 @@ namespace RRTStar
                     //find a way that have less distance to nearnode through newnode
                     if(nearnode->getDistance()>newdistance)
                     {
-                        double dist = nearnode->getDistance() - newdistance;
-                        nearnode->resetDistance(dist);
-                        nearnode->changeparent(newnode);
-                        newnode->addchildren(nearnode);
-                   //     qDebug()<<"Op once!";
+                        if(_stateSpace->transitionValid(newnode->state(),nearnode->state()))
+                        {
+                            double dist = nearnode->getDistance() - newdistance;
+                            nearnode->resetDistance(dist);
+                            nearnode->changeparent(newnode);
+                            newnode->addchildren(nearnode);                            
+                        }
                     }
                 }
             }
@@ -305,21 +341,58 @@ namespace RRTStar
                 intermediateState = _stateSpace->intermediateState(source->state(), target, stepSize());
             }
 
+            if(!(_stateSpace->stateValid(intermediateState)))
+                return nullptr;
             //  Make sure there's actually a direct path from @source to
             //  @intermediateState.  If not, abort
-            if (!_stateSpace->transitionValid(source->state(), intermediateState)) {
-                return nullptr;
-            }
+            //if (!_stateSpace->transitionValid(source->state(), intermediateState)) {
+            //    return nullptr;
+            //}
 
             // Add a node to the tree for this state
             double n_distance = _stateSpace->distance (source->state (),intermediateState) + source->getDistance ();
-            if( n_distance > limitdistance)
+            if( n_distance > (limitdistance*0.7))
                 return nullptr;
 
             //get nearnodes
-            nearnodes(intermediateState);
-   //         qDebug()<<"nearnodes:"<<_nearnodes.size ();
+            if(nearnodes(intermediateState))
+            {    
+                //sort the nearnode by distance
+                std::list<Nodes_Dis<T>> sortednode;
+                SortNodesBydis(intermediateState, _nearnodes, sortednode);
+
+                double nn_bestdis = DBL_MAX;
+                Node<T> *bestparent = nullptr;
+                for(Nodes_Dis<T> sorted : sortednode)
+                {
+                    if(_stateSpace->transitionValid(sorted.node->state(),intermediateState))
+                    {                    
+                        bestparent = sorted.node;
+                        n_distance = sorted.distance;
+                        break;
+                    }
+                }
+                if(bestparent == nullptr)
+                {
+                    if (!_stateSpace->transitionValid(source->state(), intermediateState))
+                        return nullptr;
+
+                }
+                else
+                {
+                    source = bestparent;
+                }
+
+            }
+            else
+            {
+                if (!_stateSpace->transitionValid(source->state(), intermediateState)) {
+                    return nullptr;
+                }
+            }
+
             //search for best parent
+            /*
             for(Node<T> *nearnode : _nearnodes)
             {
                 double nn_distance = nearnode->getDistance ()+_stateSpace->distance (nearnode->state (),intermediateState);
@@ -329,9 +402,10 @@ namespace RRTStar
                     source=nearnode;
                 }
             }
-
+            */
             Node<T> *n = new Node<T>(intermediateState, source);
             n->setDistance (n_distance);
+            
             _nodes.push_back(n);
             OptimizeNearNodes(n,source);
             return n;
@@ -404,6 +478,12 @@ namespace RRTStar
             return _nodes;
         }
 
+        /**
+         * Return The Nearnodes
+         */
+        const std::vector<Node<T> *> nearNodes() const {
+            return _nearnodes;
+        }
 
         /**
          * @brief The start state for this tree
@@ -412,6 +492,7 @@ namespace RRTStar
             if (_nodes.empty()) throw std::logic_error("No start state specified for RRT::Tree");
             else return rootNode()->state();
         }
+
         void setStartState(const T &startState) {
             reset(true);
 
@@ -454,8 +535,10 @@ namespace RRTStar
         float _goalMaxDist;
 
         float _stepSize;
+        //In AutoStepMode 
         float _maxStepSize;
 
+        //The state space
         std::shared_ptr<StateSpace<T>> _stateSpace;
 
     };

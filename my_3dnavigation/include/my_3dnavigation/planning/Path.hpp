@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-
+#include <3dplane/GridStateSpace3d.h>
 
 namespace Planning {
 
@@ -37,6 +37,7 @@ namespace Planning {
     template<typename T>
     void SmoothPath(std::vector<T> &pts, const StateSpace<T> &stateSpace) {
         int span = 2;
+
         while (span < pts.size()) {
             bool changed = false;
             for (int i = 0; i+span < pts.size(); i++) {

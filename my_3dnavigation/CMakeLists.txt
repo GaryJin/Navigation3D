@@ -39,7 +39,6 @@ catkin_package(
 # include_directories(include)
 include_directories(
   include/my_3dnavigation
-#  /home/gary/Desktop/eigen-eigen-07105f7124f9
   ${catkin_INCLUDE_DIRS}
 )
 
